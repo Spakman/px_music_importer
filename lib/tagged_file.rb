@@ -54,23 +54,41 @@ module MusicImporter
     end
 
     # Parses the filepath to extract track information.
-    #
-    # Spakman - Spakwards/01 - Donald where's yer troosers? (in reverse).ogg
-    # Spakman - Spakwards/Donald where's yer troosers? (in reverse).ogg
-    # 
-    # Use UTF-8 ?
     def parse(path)
-      if %r{
-        (?# <sep> defines a seperator between words in the filepath - whitespace or underscore)
-        (?<sep> \s | _){0}
+      char_class_definitions = <<-DEF
+        (?# <sep> defines a separator between words in the filepath - whitespace or underscore)
+        (?<sep> \\s | _){0}
 
         (?# <chars> defines one or more characters that are used in the title, artist and album name)
-        (?<chars> [\w_\s!?\-()'"\[\]]+?){0}
+        (?<chars> [\\w_\\s!?\\-()'"\\[\\]]+?){0}
+      DEF
+      # try this sort of structure:
+      # artist/album/track
+      if %r{
+        #{char_class_definitions}
+
+        (?# start with an artist name followed by a directory separator)
+        (?<artist>\g<chars>)/
+
+        (?# then comes the album name then the directory separator)
+        (?<album>\g<chars>)/ 
+
+        (?# optionally, the track number followed by a hyphen)
+        (?:(?<num>\d{1,2}) \g<sep>? - ? \g<sep>?)?
+
+        (?# then the title of the song, followed by a file extension)
+        (?<title>\g<chars>) \. \w{3,4}
+      }x.match(path) or 
+        
+      # now try this sort of structure:
+      # artist - album/track
+      %r{
+        #{char_class_definitions}
 
         (?# start with an artist name followed by a hyphen)
         (?<artist>\g<chars>) \g<sep>? - \g<sep>? 
 
-        (?# then comes the album name then the directory seperator)
+        (?# then comes the album name then the directory separator)
         (?<album>\g<chars>) / 
 
         (?# optionally, the track number followed by a hyphen)
@@ -78,7 +96,7 @@ module MusicImporter
 
         (?# then the title of the song, followed by a file extension)
         (?<title>\g<chars>) \. \w{3,4}
-        }x.match path
+      }x.match(path)
         properties = $~
         @artist_from_path = properties[:artist].gsub("_", " ")
         @album_from_path = properties[:album]

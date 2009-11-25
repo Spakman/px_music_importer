@@ -4,7 +4,7 @@ require 'fileutils'
 require_relative "../lib/tagged_file"
 
 class TrackDataFromPathTest < Test::Unit::TestCase
-  def test_infer_all_data_from_perfect_path
+  def test_artist_hyphen_album_directory_structure
     @file = MusicImporter::TaggedFile.open "Spakman - Spakwards/01 - Donald where's yer troosers? (in reverse).ogg", "test/music"
     assert_equal "Donald where's yer troosers? (in reverse)", @file.title_from_path
     assert_equal "Spakman", @file.artist_from_path
@@ -50,5 +50,21 @@ class TrackDataFromPathTest < Test::Unit::TestCase
     assert_equal "Spakman", @file.artist_from_path
     assert_equal "Spakwards", @file.album_from_path
     assert_equal 2, @file.track_number_from_path
+  end
+
+  def test_artist_album_tracks_directory_structure
+    @file = MusicImporter::TaggedFile.open "Spakman/Spakwards/01 - Donald where's yer troosers? (in reverse).ogg", "test/music"
+    assert_equal "Donald where's yer troosers? (in reverse)", @file.title_from_path
+    assert_equal "Spakman", @file.artist_from_path
+    assert_equal "Spakwards", @file.album_from_path
+    assert_equal 1, @file.track_number_from_path
+  end
+
+  def test_artist_album_tracks_directory_structure_with_underscores_instead_of_spaces
+    @file = MusicImporter::TaggedFile.open "Spakman/Spakwards/01_-_Donald_where's_yer_troosers?_(in_reverse).ogg", "test/music"
+    assert_equal "Donald where's yer troosers? (in reverse)", @file.title_from_path
+    assert_equal "Spakman", @file.artist_from_path
+    assert_equal "Spakwards", @file.album_from_path
+    assert_equal 1, @file.track_number_from_path
   end
 end
