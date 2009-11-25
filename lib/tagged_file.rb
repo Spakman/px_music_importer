@@ -56,6 +56,7 @@ module MusicImporter
     # Parses the filepath to extract track information.
     #
     # Spakman - Spakwards/01 - Donald where's yer troosers? (in reverse).ogg
+    # Spakman - Spakwards/Donald where's yer troosers? (in reverse).ogg
     # 
     # Use UTF-8 ?
     def parse(path)
@@ -64,7 +65,7 @@ module MusicImporter
         (?<sep> \s | _){0}
 
         (?# <chars> defines one or more characters that are used in the title, artist and album name)
-        (?<chars> [a-zA-Z0-9_\s!?\-()'"\[\]]+?){0}
+        (?<chars> [\w_\s!?\-()'"\[\]]+?){0}
 
         (?# start with an artist name followed by a hyphen)
         (?<artist>\g<chars>) \g<sep>? - \g<sep>? 
@@ -78,10 +79,15 @@ module MusicImporter
         (?# then the title of the song, followed by a file extension)
         (?<title>\g<chars>) \. \w{3,4}
         }x.match path
-        @artist_from_path = $~[:artist]
-        @album_from_path = $~[:album]
-        @track_number_from_path = $~[:num].to_i
-        @title_from_path = $~[:title]
+        properties = $~
+        @artist_from_path = properties[:artist].gsub("_", " ")
+        @album_from_path = properties[:album]
+        if properties[:num]
+          @track_number_from_path = properties[:num].to_i
+        else
+          @track_number_from_path = nil
+        end
+        @title_from_path = properties[:title].gsub("_", " ")
       end
     end
   end
