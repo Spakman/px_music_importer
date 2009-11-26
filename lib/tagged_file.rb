@@ -1,4 +1,7 @@
-#!/scratch/bin/ruby
+# Copyright (C) 2009 Mark Somerville <mark@scottishclimbs.com>
+# Released under the General Public License (GPL) version 3.
+# See COPYING
+
 require 'ffi'
 
 module MusicImporter
