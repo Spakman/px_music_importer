@@ -54,6 +54,8 @@ module MusicImporter
     end
 
     # Parses the filepath to extract track information.
+    #
+    # The method tries a few different regexs.
     def parse(path)
       char_class_definitions = <<-DEF
         (?# <sep> defines a separator between words in the filepath - whitespace or underscore)
@@ -61,6 +63,9 @@ module MusicImporter
 
         (?# <chars> defines one or more characters that are used in the title, artist and album name)
         (?<chars> [\\w_\\s!?\\-()'"\\[\\]]+?){0}
+
+        (?# <postnum> defines characters that that could come after the track number)
+        (?<postnum> [_\\s\\-\\.]+){0}
       DEF
       # try this sort of structure:
       # artist/album/track
@@ -73,8 +78,8 @@ module MusicImporter
         (?# then comes the album name then the directory separator)
         (?<album>\g<chars>)/ 
 
-        (?# optionally, the track number followed by a hyphen)
-        (?:(?<num>\d{1,2}) \g<sep>? - ? \g<sep>?)?
+        (?# optionally, the track number followed by a <postnum>)
+        (?:(?<num>\d{1,2}) \g<postnum>)?
 
         (?# then the title of the song, followed by a file extension)
         (?<title>\g<chars>) \. \w{3,4}
@@ -91,15 +96,40 @@ module MusicImporter
         (?# then comes the album name then the directory separator)
         (?<album>\g<chars>) / 
 
-        (?# optionally, the track number followed by a hyphen)
-        (?:(?<num>\d{1,2}) \g<sep>? - ? \g<sep>?)?
+        (?# optionally, the track number followed by a <postnum>)
+        (?:(?<num>\d{1,2}) \g<postnum>)?
+
+        (?# then the title of the song, followed by a file extension)
+        (?<title>\g<chars>) \. \w{3,4}
+      }x.match(path) or 
+        
+      # now try this sort of structure:
+      # artist/artist - track
+      %r{
+        #{char_class_definitions}
+
+        (?# start with an artist name followed by a directory separator)
+        (?<artist>\g<chars>)/
+
+        (?# then comes the artist name again followed by a hyphen)
+        (?<artist>\g<chars>) \g<sep>? - \g<sep>? 
+
+        (?# optionally, the track number followed by a <postnum>)
+        (?:(?<num>\d{1,2}) \g<postnum>)?
 
         (?# then the title of the song, followed by a file extension)
         (?<title>\g<chars>) \. \w{3,4}
       }x.match(path)
         properties = $~
         @artist_from_path = properties[:artist].gsub("_", " ")
-        @album_from_path = properties[:album]
+
+        # album is not always used
+        begin
+          @album_from_path = properties[:album]
+        rescue IndexError
+          @album_from_path = nil
+        end
+
         if properties[:num]
           @track_number_from_path = properties[:num].to_i
         else

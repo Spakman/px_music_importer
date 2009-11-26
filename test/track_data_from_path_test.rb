@@ -67,4 +67,42 @@ class TrackDataFromPathTest < Test::Unit::TestCase
     assert_equal "Spakwards", @file.album_from_path
     assert_equal 1, @file.track_number_from_path
   end
+
+  def test_artist_album_tracks_directory_structure_with_period_after_track_number
+    @file = MusicImporter::TaggedFile.open "Spakman/Spakwards/01. - Donald where's yer troosers? (in reverse).ogg", "test/music"
+    assert_equal "Donald where's yer troosers? (in reverse)", @file.title_from_path
+    assert_equal "Spakman", @file.artist_from_path
+    assert_equal "Spakwards", @file.album_from_path
+    assert_equal 1, @file.track_number_from_path
+
+    @file = MusicImporter::TaggedFile.open "Spakman/Spakwards/01.Donald where's yer troosers? (in reverse).ogg", "test/music"
+    assert_equal "Donald where's yer troosers? (in reverse)", @file.title_from_path
+    assert_equal "Spakman", @file.artist_from_path
+    assert_equal "Spakwards", @file.album_from_path
+    assert_equal 1, @file.track_number_from_path
+  end
+
+  def test_artist_then_artist_track_structure_without_track_number
+    @file = MusicImporter::TaggedFile.open "Spakman/Spakman - Donald where's yer troosers? (in reverse).ogg", "test/music"
+    assert_equal "Donald where's yer troosers? (in reverse)", @file.title_from_path
+    assert_equal "Spakman", @file.artist_from_path
+    assert_equal nil, @file.album_from_path
+    assert_equal nil, @file.track_number_from_path
+  end
+
+  def test_artist_then_artist_track_structure_with_track_number
+    @file = MusicImporter::TaggedFile.open "Spakman/Spakman - 01 - Donald where's yer troosers? (in reverse).ogg", "test/music"
+    assert_equal "Donald where's yer troosers? (in reverse)", @file.title_from_path
+    assert_equal "Spakman", @file.artist_from_path
+    assert_equal nil, @file.album_from_path
+    assert_equal 1, @file.track_number_from_path
+  end
+
+  def test_artist_then_artist_track_structure_with_track_number_no_spaces_around_hyphens
+    @file = MusicImporter::TaggedFile.open "Spakman/Spakman-01-Donald where's yer troosers? (in reverse).ogg", "test/music"
+    assert_equal "Donald where's yer troosers? (in reverse)", @file.title_from_path
+    assert_equal "Spakman", @file.artist_from_path
+    assert_equal nil, @file.album_from_path
+    assert_equal 1, @file.track_number_from_path
+  end
 end
