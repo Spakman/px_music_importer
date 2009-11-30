@@ -29,31 +29,86 @@ module MusicImporter
     end
 
     def taglib_tag
-      self.taglib_file_tag(@taglib_file)
+      if @taglib_file.address == 0
+        nil
+      else
+        self.taglib_file_tag(@taglib_file)
+      end
     end
 
     def track_number_from_tag
-      taglib_tag_track(taglib_tag)
+      if tag = taglib_tag
+        track_number = taglib_tag_track(taglib_tag)
+        track_number == 0 ? nil : track_number
+      end
     end
 
     def title_from_tag
-      taglib_tag_title(taglib_tag)
+      if tag = taglib_tag
+        title = taglib_tag_title(taglib_tag)
+        title.empty? ? nil : title
+      end
     end
 
     def artist_from_tag
-      taglib_tag_artist(taglib_tag)
+      if tag = taglib_tag
+        artist = taglib_tag_artist(taglib_tag)
+        artist.empty? ? nil : artist
+      end
     end
 
     def album_from_tag
-      taglib_tag_album(taglib_tag)
+      if tag = taglib_tag
+        album = taglib_tag_album(taglib_tag)
+        album.empty? ? nil : album
+      end
     end
 
     def genre_from_tag
-      taglib_tag_genre(taglib_tag)
+      if tag = taglib_tag
+        genre = taglib_tag_genre(taglib_tag)
+        genre.empty? ? nil : genre
+      end
     end
 
     def artist
-      artist_from_tag || artist_from_path || "Unknown"
+      artist = artist_from_tag || artist_from_path
+      if artist.nil? or artist.empty?
+        artist = "Unknown"
+      end
+      artist
+    end
+
+    def album
+      album = album_from_tag || album_from_path
+      if album.nil? or album.empty?
+        album = "Unknown"
+      end
+      album
+    end
+
+    def title
+      title = title_from_tag || title_from_path
+      if title.nil? or title.empty?
+        title = "Unknown"
+      end
+      title
+    end
+
+    def genre
+      genre = genre_from_tag
+      if genre.nil? or genre.empty?
+        genre = "Unknown"
+      end
+      genre
+    end
+
+    def track_number
+      number = track_number_from_tag || track_number_from_path
+      if number.nil? or number == 0
+        number = nil
+      end
+      number
     end
 
     # Parses the filepath to extract track information.
