@@ -5,8 +5,9 @@
 require 'ffi'
 
 module MusicImporter
-  class TaggedFile
+  class MusicFile
     attr_reader :title_from_path, :artist_from_path, :album_from_path, :track_number_from_path
+
     extend FFI::Library
     ffi_lib "tag_c"
     attach_function :taglib_file_new, [ :string ], :pointer
@@ -16,6 +17,18 @@ module MusicImporter
     attach_function :taglib_tag_artist, [ :pointer ], :string
     attach_function :taglib_tag_album, [ :pointer ], :string
     attach_function :taglib_tag_genre, [ :pointer ], :string
+
+    # Defines some named matches for use when parsing the filepath.
+    CHAR_CLASS_DEFINITIONS = <<-DEF
+      (?# <sep> defines a separator between words in the filepath - whitespace or underscore)
+      (?<sep> \\s | _){0}
+
+      (?# <chars> defines one or more characters that are used in the title, artist and album name)
+      (?<chars> [\\w_\\s!?\\-()'"\\[\\]]+?){0}
+
+      (?# <postnum> defines characters that that could come after the track number)
+      (?<postnum> [_\\s\\-\\.]+){0}
+    DEF
 
     def initialize(path, collection_root)
       collection_root = "#{collection_root}/" unless collection_root.empty?
@@ -28,6 +41,7 @@ module MusicImporter
       new path, collection_root
     end
 
+    # Gets the TagLib tag struct. Needed for calling the other C functions.
     def taglib_tag
       if @taglib_file.address == 0
         nil
@@ -36,6 +50,7 @@ module MusicImporter
       end
     end
 
+    # Returns the track number from the tag. Returns nil if not known.
     def track_number_from_tag
       if tag = taglib_tag
         track_number = taglib_tag_track(taglib_tag)
@@ -43,6 +58,7 @@ module MusicImporter
       end
     end
 
+    # Returns the title from the tag. Returns nil if not known.
     def title_from_tag
       if tag = taglib_tag
         title = taglib_tag_title(taglib_tag)
@@ -50,6 +66,7 @@ module MusicImporter
       end
     end
 
+    # Returns the artist from the tag. Returns nil if not known.
     def artist_from_tag
       if tag = taglib_tag
         artist = taglib_tag_artist(taglib_tag)
@@ -57,6 +74,7 @@ module MusicImporter
       end
     end
 
+    # Returns the album from the tag. Returns nil if not known.
     def album_from_tag
       if tag = taglib_tag
         album = taglib_tag_album(taglib_tag)
@@ -64,6 +82,7 @@ module MusicImporter
       end
     end
 
+    # Returns the genre from the tag. Returns nil if not known.
     def genre_from_tag
       if tag = taglib_tag
         genre = taglib_tag_genre(taglib_tag)
@@ -115,20 +134,10 @@ module MusicImporter
     #
     # The method tries a few different regexs.
     def parse(path)
-      char_class_definitions = <<-DEF
-        (?# <sep> defines a separator between words in the filepath - whitespace or underscore)
-        (?<sep> \\s | _){0}
-
-        (?# <chars> defines one or more characters that are used in the title, artist and album name)
-        (?<chars> [\\w_\\s!?\\-()'"\\[\\]]+?){0}
-
-        (?# <postnum> defines characters that that could come after the track number)
-        (?<postnum> [_\\s\\-\\.]+){0}
-      DEF
       # try this sort of structure:
       # artist/album/track
       if %r{
-        #{char_class_definitions}
+        #{CHAR_CLASS_DEFINITIONS}
 
         (?# start with an artist name followed by a directory separator)
         (?<artist>\g<chars>)/
@@ -146,7 +155,7 @@ module MusicImporter
       # now try this sort of structure:
       # artist - album/track
       %r{
-        #{char_class_definitions}
+        #{CHAR_CLASS_DEFINITIONS}
 
         (?# start with an artist name followed by a hyphen)
         (?<artist>\g<chars>) \g<sep>? - \g<sep>? 
@@ -164,7 +173,7 @@ module MusicImporter
       # now try this sort of structure:
       # artist/artist - track
       %r{
-        #{char_class_definitions}
+        #{CHAR_CLASS_DEFINITIONS}
 
         (?# start with an artist name followed by a directory separator)
         (?<artist>\g<chars>)/
@@ -178,6 +187,7 @@ module MusicImporter
         (?# then the title of the song, followed by a file extension)
         (?<title>\g<chars>) \. \w{3,4}
       }x.match(path)
+
         properties = $~
         @artist_from_path = properties[:artist].gsub("_", " ")
 
