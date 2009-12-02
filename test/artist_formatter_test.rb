@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'fileutils'
 require_relative "../lib/artist_formatter"
 
 class ArtistFormatterTest < Test::Unit::TestCase

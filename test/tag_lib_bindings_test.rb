@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'fileutils'
 require_relative "../lib/music_file"
 
 class TagLibBindingsTest < Test::Unit::TestCase

@@ -1,6 +1,5 @@
 # coding: utf-8
 require 'test/unit'
-require 'fileutils'
 require_relative "../lib/music_file"
 
 class TrackDataFromPathTest < Test::Unit::TestCase

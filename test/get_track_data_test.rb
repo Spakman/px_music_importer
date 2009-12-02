@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'fileutils'
 require_relative "../lib/music_file"
 
 # When getting track information, we first try to read the tag, then infer from

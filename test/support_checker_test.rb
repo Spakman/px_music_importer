@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'fileutils'
 require_relative "../lib/support_checker"
 
 class SupportCheckerTest < Test::Unit::TestCase
