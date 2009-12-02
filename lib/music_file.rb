@@ -6,7 +6,7 @@ require 'ffi'
 
 module MusicImporter
   class MusicFile
-    attr_reader :title_from_path, :artist_from_path, :album_from_path, :track_number_from_path
+    attr_reader :title_from_path, :artist_from_path, :album_from_path, :track_number_from_path, :taglib_file
 
     extend FFI::Library
     ffi_lib "tag_c"
@@ -17,6 +17,8 @@ module MusicImporter
     attach_function :taglib_tag_artist, [ :pointer ], :string
     attach_function :taglib_tag_album, [ :pointer ], :string
     attach_function :taglib_tag_genre, [ :pointer ], :string
+    attach_function :taglib_tag_free_strings, [], :void
+    attach_function :taglib_file_free, [ :pointer ], :void
 
     # Defines some named matches for use when parsing the filepath.
     CHAR_CLASS_DEFINITIONS = <<-DEF
@@ -35,61 +37,76 @@ module MusicImporter
       @path = path
       parse path
       @taglib_file = taglib_file_new("#{collection_root}#{@path}")
-    end
-
-    def self.open(path, collection_root = "")
-      new path, collection_root
-    end
-
-    # Gets the TagLib tag struct. Needed for calling the other C functions.
-    def taglib_tag
       if @taglib_file.address == 0
-        nil
+        @taglib_tag = nil
       else
-        self.taglib_file_tag(@taglib_file)
+        @taglib_tag = self.taglib_file_tag(@taglib_file)
       end
+    end
+
+    # Called with a block, this will create a MusicFile and handle freeing 
+    # resources when the block has finished.
+    def self.open(path, collection_root = "", &block)
+      instance = new(path, collection_root)
+      yield instance
+      instance.free_resources
+    end
+
+    # Frees the memory used the TagLib C stuff. This will make calling some
+    # methods on the object throw errors.
+    #
+    # TODO: if an instance has had this method called on it, auto-initialize
+    # the TagLib stuff again so that those methods can be called safely.
+    def free_resources
+      taglib_tag_free_strings
+      taglib_file_free @taglib_file
+      # calling this every time resources are freed is slow, but minimises 
+      # memory usage
+      GC.start 
     end
 
     # Returns the track number from the tag. Returns nil if not known.
     def track_number_from_tag
-      if tag = taglib_tag
-        track_number = taglib_tag_track(taglib_tag)
+      if @taglib_tag
+        track_number = taglib_tag_track(@taglib_tag)
         track_number == 0 ? nil : track_number
       end
     end
 
     # Returns the title from the tag. Returns nil if not known.
     def title_from_tag
-      if tag = taglib_tag
-        title = taglib_tag_title(taglib_tag)
+      if @taglib_tag
+        title = taglib_tag_title(@taglib_tag)
         title.empty? ? nil : title
       end
     end
 
     # Returns the artist from the tag. Returns nil if not known.
     def artist_from_tag
-      if tag = taglib_tag
-        artist = taglib_tag_artist(taglib_tag)
+      if @taglib_tag
+        artist = taglib_tag_artist(@taglib_tag)
         artist.empty? ? nil : artist
       end
     end
 
     # Returns the album from the tag. Returns nil if not known.
     def album_from_tag
-      if tag = taglib_tag
-        album = taglib_tag_album(taglib_tag)
+      if @taglib_tag
+        album = taglib_tag_album(@taglib_tag)
         album.empty? ? nil : album
       end
     end
 
     # Returns the genre from the tag. Returns nil if not known.
     def genre_from_tag
-      if tag = taglib_tag
-        genre = taglib_tag_genre(taglib_tag)
+      if @taglib_tag
+        genre = taglib_tag_genre(@taglib_tag)
         genre.empty? ? nil : genre
       end
     end
 
+    # Returns the artist from the tag, falling back to the path and, finally,
+    # "Unknown".
     def artist
       artist = artist_from_tag || artist_from_path
       if artist.nil? or artist.empty?
@@ -98,6 +115,8 @@ module MusicImporter
       artist
     end
 
+    # Returns the album from the tag, falling back to the path and, finally,
+    # "Unknown".
     def album
       album = album_from_tag || album_from_path
       if album.nil? or album.empty?
@@ -106,6 +125,8 @@ module MusicImporter
       album
     end
 
+    # Returns the title from the tag, falling back to the path and, finally,
+    # "Unknown".
     def title
       title = title_from_tag || title_from_path
       if title.nil? or title.empty?
@@ -114,6 +135,8 @@ module MusicImporter
       title
     end
 
+    # Returns the genre from the tag, falling back to the path and, finally,
+    # "Unknown".
     def genre
       genre = genre_from_tag
       if genre.nil? or genre.empty?
@@ -122,6 +145,8 @@ module MusicImporter
       genre
     end
 
+    # Returns the track number from the tag, falling back to the path and,
+    # finally, nil.
     def track_number
       number = track_number_from_tag || track_number_from_path
       if number.nil? or number == 0
