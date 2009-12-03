@@ -13,6 +13,7 @@ class GetTrackDataTest < Test::Unit::TestCase
       assert_equal "Donald where's yer troosers? (in reverse)", file.title
       assert_equal "Comedy", file.genre
       assert_equal 1, file.track_number
+      assert_equal 5, file.length
     end
   end
 
@@ -23,6 +24,7 @@ class GetTrackDataTest < Test::Unit::TestCase
       assert_equal "Donald where's yer troosers? (in reverse)", file.title
       assert_equal "Unknown", file.genre
       assert_equal 1, file.track_number
+      assert_equal 5, file.length
     end
   end
 
@@ -33,6 +35,7 @@ class GetTrackDataTest < Test::Unit::TestCase
       assert_equal "Unknown", file.title
       assert_equal "Unknown", file.genre
       assert_nil file.track_number
+      assert_equal 5, file.length
     end
   end
 end

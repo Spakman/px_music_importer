@@ -9,6 +9,7 @@ class TagLibBindingsTest < Test::Unit::TestCase
       assert_equal "Spakman", file.artist_from_tag
       assert_equal "Spakwards", file.album_from_tag
       assert_equal "Comedy", file.genre_from_tag
+      assert_equal 5, file.length_from_tag
     end
   end
 
@@ -19,6 +20,7 @@ class TagLibBindingsTest < Test::Unit::TestCase
       assert_nil file.artist_from_tag
       assert_nil file.album_from_tag
       assert_nil file.genre_from_tag
+      assert_equal 5, file.length_from_tag
     end
   end
 
@@ -29,6 +31,7 @@ class TagLibBindingsTest < Test::Unit::TestCase
       assert_equal "Spakman", file.artist_from_tag
       assert_equal "Spakwards", file.album_from_tag
       assert_equal "Comedy", file.genre_from_tag
+      assert_equal 5, file.length_from_tag
     end
   end
 
@@ -39,6 +42,7 @@ class TagLibBindingsTest < Test::Unit::TestCase
       assert_nil file.artist_from_tag
       assert_nil file.album_from_tag
       assert_nil file.genre_from_tag
+      assert_nil file.length_from_tag
     end
   end
 end

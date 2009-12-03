@@ -52,9 +52,9 @@ class MusicImporter::Importer
       end
 
       if rows.length > 0
-        @table[@primary_key] = { artist: rows.first['artist'], album: file.album, track: file.title, genre: file.genre, track_nr: file.track_number, url: "file://#{filepath}" }
+        @table[@primary_key] = { artist: rows.first['artist'], album: file.album, track: file.title, genre: file.genre, track_nr: file.track_number, url: "file://#{filepath}", length: file.length }
       else
-        @table[@primary_key] = { artist: artist_name, album: file.album, track: file.title, genre: file.genre, track_nr: file.track_number, url: "file://#{filepath}" }
+        @table[@primary_key] = { artist: artist_name, album: file.album, track: file.title, genre: file.genre, track_nr: file.track_number, url: "file://#{filepath}", length: file.length }
       end
       @primary_key += 1
     end

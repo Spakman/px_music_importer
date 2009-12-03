@@ -17,6 +17,8 @@ module MusicImporter
     attach_function :taglib_tag_artist, [ :pointer ], :string
     attach_function :taglib_tag_album, [ :pointer ], :string
     attach_function :taglib_tag_genre, [ :pointer ], :string
+    attach_function :taglib_file_audioproperties, [ :pointer ], :pointer
+    attach_function :taglib_audioproperties_length, [ :pointer ], :int
     attach_function :taglib_tag_free_strings, [], :void
     attach_function :taglib_file_free, [ :pointer ], :void
 
@@ -39,8 +41,10 @@ module MusicImporter
       @taglib_file = taglib_file_new("#{collection_root}#{@path}")
       if @taglib_file.address == 0
         @taglib_tag = nil
+        @taglib_audio_properties = nil
       else
-        @taglib_tag = self.taglib_file_tag(@taglib_file)
+        @taglib_tag = taglib_file_tag(@taglib_file)
+        @taglib_audio_properties = taglib_file_audioproperties(@taglib_file)
       end
     end
 
@@ -104,6 +108,14 @@ module MusicImporter
         genre.empty? ? nil : genre
       end
     end
+
+    def length_from_tag
+      if @taglib_audio_properties
+        taglib_audioproperties_length(@taglib_audio_properties)
+      end
+    end
+
+    alias_method :length, :length_from_tag
 
     # Returns the artist from the tag, falling back to the path and, finally,
     # "Unknown".
